@@ -11,7 +11,7 @@ pub struct SetNoise<'info> {
         init,
         payer = user,
         space = 8 + Noise::INIT_SPACE,
-        seeds = [b"noise", user.key().as_ref()],
+        seeds = [b"noise", user.key().as_ref(), &user_config.noise_data_count.to_le_bytes()],
         bump,
     )]
     pub noise: Box<Account<'info, Noise>>,
@@ -34,6 +34,7 @@ impl<'info> SetNoise<'info> {
 
          // Update user noise points
         self.user_config.noise_data_points += 1;
+        self.user_config.noise_data_count += 1;
         Ok(())
     }
 }

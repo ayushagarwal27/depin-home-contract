@@ -81,14 +81,19 @@ describe("Initialize config, Initialize user config, set temperature, set noise,
     let userConfigAccount = await program.account.userConfig.fetch(userConfig);
     expect(userConfigAccount.points).to.equal(0);
     expect(userConfigAccount.noiseDataPoints).to.equal(0);
-    console.log(userConfigAccount);
   });
 
   it("create a temp data pda", async () => {
-    const temp = (config = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("temp"), user.publicKey.toBuffer()],
+    let userAccount = await program.account.userConfig.fetch(userConfig);
+    const currentCount = userAccount.tempDataCount;
+    const countBuffer = Buffer.alloc(4); // assuming u32
+
+    countBuffer.writeUInt32LE(currentCount, 0);
+
+    const temp = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("temp"), user.publicKey.toBuffer(), countBuffer],
       program.programId
-    )[0]);
+    )[0];
     const tx = await program.methods
       .setTemp(30)
       .accountsPartial({
@@ -99,19 +104,52 @@ describe("Initialize config, Initialize user config, set temperature, set noise,
       })
       .signers([user])
       .rpc();
-
+    userAccount = await program.account.userConfig.fetch(userConfig);
     let tempAccount = await program.account.temp.fetch(temp);
-    let userAccount = await program.account.userConfig.fetch(userConfig);
     expect(tempAccount.value).to.equal(30);
     expect(userAccount.tempDataPoints).to.equal(1);
-    // console.log(userAccount);
+    expect(userAccount.tempDataCount).to.equal(1);
+  });
+
+  it("create a second temp data pda", async () => {
+    let userAccount = await program.account.userConfig.fetch(userConfig);
+    const currentCount = userAccount.tempDataCount;
+    const countBuffer = Buffer.alloc(4); // assuming u32
+
+    countBuffer.writeUInt32LE(currentCount, 0);
+
+    const temp = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("temp"), user.publicKey.toBuffer(), countBuffer],
+      program.programId
+    )[0];
+    const tx = await program.methods
+      .setTemp(30)
+      .accountsPartial({
+        user: user.publicKey,
+        temp,
+        userConfig,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .signers([user])
+      .rpc();
+    userAccount = await program.account.userConfig.fetch(userConfig);
+    let tempAccount = await program.account.temp.fetch(temp);
+    expect(tempAccount.value).to.equal(30);
+    expect(userAccount.tempDataPoints).to.equal(2);
+    expect(userAccount.tempDataCount).to.equal(2);
   });
 
   it("create a noise data pda", async () => {
+    let userAccount = await program.account.userConfig.fetch(userConfig);
+    const currentCount = userAccount.noiseDataCount;
+    const countBuffer = Buffer.alloc(4); // assuming u32
+
+    countBuffer.writeUInt32LE(currentCount, 0);
     const noise = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("noise"), user.publicKey.toBuffer()],
+      [Buffer.from("noise"), user.publicKey.toBuffer(), countBuffer],
       program.programId
     )[0];
+
     const tx = await program.methods
       .setNoise(30)
       .accountsPartial({
@@ -122,12 +160,11 @@ describe("Initialize config, Initialize user config, set temperature, set noise,
       })
       .signers([user])
       .rpc();
-
+    userAccount = await program.account.userConfig.fetch(userConfig);
     let noiseAccount = await program.account.noise.fetch(noise);
-    let userAccount = await program.account.userConfig.fetch(userConfig);
-
     expect(noiseAccount.value).to.equal(30);
     expect(userAccount.noiseDataPoints).to.equal(1);
+    expect(userAccount.noiseDataCount).to.equal(1);
     // console.log(userAccount);
   });
 
@@ -158,7 +195,8 @@ describe("Initialize config, Initialize user config, set temperature, set noise,
     const rewardsAccount = await getAccount(connection, rewardsAta);
     let userAccount = await program.account.userConfig.fetch(userConfig);
     expect(userAccount.tempDataPoints).to.equal(0);
-    expect(userAccount.noiseDataPoints).to.equal(0);
-    expect(Number(rewardsAccount.amount.toString()) / 1000_000).to.equal(8);
+    expect(userAccount.tempDataCount).to.equal(2);
+    expect(userAccount.noiseDataCount).to.equal(1);
+    expect(Number(rewardsAccount.amount.toString()) / 1000_000).to.equal(11);
   });
 });

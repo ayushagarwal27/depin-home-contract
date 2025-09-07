@@ -11,7 +11,7 @@ pub struct SetTemp<'info> {
         init,
         payer = user,
         space = 8 + Temp::INIT_SPACE,
-        seeds = [b"temp", user.key().as_ref()],
+        seeds = [b"temp", user.key().as_ref(), &user_config.temp_data_count.to_le_bytes()],
         bump,
     )]
     pub temp: Box<Account<'info, Temp>>,
@@ -34,6 +34,7 @@ impl<'info> SetTemp<'info> {
 
         // Update user temp points
         self.user_config.temp_data_points += 1;
+        self.user_config.temp_data_count += 1;
         Ok(())
     }
 }

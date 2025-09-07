@@ -24,7 +24,9 @@ impl<'info> InitializeUser<'info> {
         self.user_config.set_inner(UserConfig {
             points: 0,
             temp_data_points: 0,
+            temp_data_count: 0,
             noise_data_points: 0,
+            noise_data_count: 0,
             bump: bumps.user_config,
         });
         Ok(())
