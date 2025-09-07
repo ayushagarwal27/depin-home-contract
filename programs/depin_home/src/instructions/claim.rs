@@ -58,12 +58,12 @@ impl<'info> Claim<'info> {
         let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
         let total_points = self
             .user_config
-            .noise_data_points
+            .temp_data_points
             .checked_mul(self.config.reward_amount_temp as u32)
             .unwrap()
             .checked_add(
                 self.user_config
-                    .temp_data_points
+                    .noise_data_points
                     .checked_mul(self.config.reward_amount_noise as u32)
                     .unwrap(),
             )
