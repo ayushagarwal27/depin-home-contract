@@ -56,11 +56,22 @@ impl<'info> Claim<'info> {
         let signer_seeds = &[&seeds[..]];
 
         let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
-        let total_points = self.user_config.noise_data_points + self.user_config.temp_data_points;
+        let total_points = self
+            .user_config
+            .noise_data_points
+            .checked_mul(self.config_account.reward_amount_temp as u64)
+            .unwrap()
+            .checked_add(
+                self.user_config
+                    .temp_data_points
+                    .checked_mul(self.config_account.reward_amount_noise as u64)
+                    .unwrap(),
+            )
+            .unwrap();
 
         mint_to(
             cpi_context,
-            total_points as u64 * 10_u64.pow(self.rewards_mint.decimals as u32),
+            total_points * 10_u64.pow(self.rewards_mint.decimals as u32),
         )?;
 
         // Make user points to zero
