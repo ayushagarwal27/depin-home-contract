@@ -11,16 +11,17 @@ pub struct SetNoise<'info> {
         init,
         payer = user,
         space = 8 + Noise::INIT_SPACE,
-        seeds = [b"temp", user.key().as_ref()],
+        seeds = [b"noise", user.key().as_ref()],
         bump,
     )]
-    pub noise: Account<'info, Noise>,
+    pub noise: Box<Account<'info, Noise>>,
 
     #[account(     
+        mut,
         seeds = [b"user".as_ref(), user.key().as_ref()],
         bump = user_config.bump
     )]
-    pub user_config: Account<'info, UserConfig>,
+    pub user_config: Box<Account<'info, UserConfig>>,
 
     pub system_program: Program<'info, System>,
 }

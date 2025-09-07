@@ -1,10 +1,12 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenInterface};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenInterface},
+};
 
 use crate::state::Config;
 
 #[derive(Accounts)]
-#[instruction(name:String)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -16,7 +18,7 @@ pub struct Initialize<'info> {
         space = 8 + Config::INIT_SPACE,
         bump,
     )]
-    pub config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
 
     #[account(
         init,
@@ -35,8 +37,8 @@ pub struct Initialize<'info> {
 impl<'info> Initialize<'info> {
     pub fn initialize(
         &mut self,
-        reward_amount_temp: u16,
-        reward_amount_noise: u16,
+        reward_amount_temp: u8,
+        reward_amount_noise: u8,
         bumps: &InitializeBumps,
     ) -> Result<()> {
         // Initialize marketplace

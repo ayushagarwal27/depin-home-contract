@@ -6,14 +6,16 @@ use crate::state::UserConfig;
 pub struct InitializeUser<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
+
     #[account(
         init,
         payer = user,
-        seeds = [b"user".as_ref(), user.key().as_ref()],
+        seeds = [b"user", user.key().as_ref()],
         space = 8 + UserConfig::INIT_SPACE,
         bump
     )]
-    pub user_config: Account<'info, UserConfig>,
+    pub user_config: Box<Account<'info, UserConfig>>,
+
     pub system_program: Program<'info, System>,
 }
 

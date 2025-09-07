@@ -13,8 +13,8 @@ pub mod depin_home {
 
     pub fn initialize(
         ctx: Context<Initialize>,
-        reward_amount_temp: u16,
-        reward_amount_noise: u16,
+        reward_amount_temp: u8,
+        reward_amount_noise: u8,
     ) -> Result<()> {
         ctx.accounts
             .initialize(reward_amount_temp, reward_amount_noise, &ctx.bumps)

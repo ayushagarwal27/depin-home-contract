@@ -14,18 +14,18 @@ pub struct Claim<'info> {
          seeds = [b"user".as_ref(), user.key().as_ref()],
          bump = user_config.bump
     )]
-    pub user_config: Account<'info, UserConfig>,
+    pub user_config: Box<Account<'info, UserConfig>>,
 
     #[account(
-        seeds = [b"config"],
-        bump = config_account.bump
+        seeds = [b"config".as_ref()],
+        bump = config.bump
     )]
-    pub config_account: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
 
     #[account(
         mut,
         seeds = [b"rewards".as_ref()],
-        bump = config_account.rewards_bump,
+        bump = config.rewards_bump,
     )]
     pub rewards_mint: Account<'info, Mint>,
 
@@ -35,7 +35,7 @@ pub struct Claim<'info> {
         associated_token::mint = rewards_mint,
         associated_token::authority = user,
     )]
-    pub rewards_ata: Account<'info, TokenAccount>,
+    pub rewards_ata: Box<Account<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -48,30 +48,30 @@ impl<'info> Claim<'info> {
         let cpi_program = self.token_program.to_account_info();
         let cpi_accounts = MintTo {
             mint: self.rewards_mint.to_account_info(),
-            authority: self.config_account.to_account_info(),
+            authority: self.config.to_account_info(),
             to: self.rewards_ata.to_account_info(),
         };
 
-        let seeds = &[b"config".as_ref()];
+        let seeds = &[b"config".as_ref(), &[self.config.bump]];
         let signer_seeds = &[&seeds[..]];
 
         let cpi_context = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
         let total_points = self
             .user_config
             .noise_data_points
-            .checked_mul(self.config_account.reward_amount_temp as u64)
+            .checked_mul(self.config.reward_amount_temp as u32)
             .unwrap()
             .checked_add(
                 self.user_config
                     .temp_data_points
-                    .checked_mul(self.config_account.reward_amount_noise as u64)
+                    .checked_mul(self.config.reward_amount_noise as u32)
                     .unwrap(),
             )
             .unwrap();
 
         mint_to(
             cpi_context,
-            total_points * 10_u64.pow(self.rewards_mint.decimals as u32),
+            total_points as u64 * 10_u64.pow(self.rewards_mint.decimals as u32),
         )?;
 
         // Make user points to zero

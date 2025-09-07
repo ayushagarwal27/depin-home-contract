@@ -14,13 +14,14 @@ pub struct SetTemp<'info> {
         seeds = [b"temp", user.key().as_ref()],
         bump,
     )]
-    pub temp: Account<'info, Temp>,
+    pub temp: Box<Account<'info, Temp>>,
 
     #[account(     
+        mut,
         seeds = [b"user".as_ref(), user.key().as_ref()],
         bump = user_config.bump
     )]
-    pub user_config: Account<'info, UserConfig>,
+    pub user_config: Box<Account<'info, UserConfig>>,
 
     pub system_program: Program<'info, System>,
 }
